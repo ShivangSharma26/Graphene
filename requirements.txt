@@ -1,0 +1,29 @@
+# Web and Async
+fastapi==0.104.1
+uvicorn==0.24.0
+celery==5.3.4
+redis==5.0.1
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+
+# Graph and Vector DBs
+neo4j==5.14.1
+qdrant-client==1.6.4
+
+# Parsing and Git
+GitPython==3.1.40
+tree-sitter==0.21.0
+tree-sitter-python==0.21.0
+
+# Embeddings and LLMs
+langchain
+langchain-core
+langchain-openai  # As placeholder for LLM integration
+voyageai
+
+# Multi-Agent
+langgraph
+
+# Utilities
+python-dotenv==1.0.0
+pytest==7.4.3
