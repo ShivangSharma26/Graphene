@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Graph Database for codebase relationships
+  neo4j:
+    image: neo4j:5.12
+    ports:
+      - "7474:7474" # HTTP
+      - "7687:7687" # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/graphene_password
+    volumes:
+      - neo4j_data:/data
+
+  # Vector Database for semantic search
+  qdrant:
+    image: qdrant/qdrant:v1.7.0
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  # Message Broker for Celery tasks
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # Backend DB for metadata / job status
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=graphene
+      - POSTGRES_PASSWORD=graphene_pwd
+      - POSTGRES_DB=graphene_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  neo4j_data:
+  qdrant_data:
+  postgres_data:
