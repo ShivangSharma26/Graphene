@@ -6,8 +6,24 @@ from git import Repo
 def clone_repo(repo_url: str, branch: str = "main", dest_dir: str = None) -> str:
     """
     Clones a git repository into a local directory and filters out noise.
-    Returns the path to the cloned repository.
+    Supports standard GitHub repo URLs and subdirectory/branch-specific tree/blob URLs.
+    Returns the path to the cloned repository or subdirectory.
     """
+    # 1. Parse URL to check for tree/blob subdirectory patterns
+    repo_url = repo_url.rstrip('/')
+    subpath = None
+    
+    for separator in ("/tree/", "/blob/"):
+        if separator in repo_url:
+            base_part, rest_part = repo_url.split(separator, 1)
+            parts = rest_part.split("/")
+            if parts:
+                branch = parts[0]
+                if len(parts) > 1:
+                    subpath = "/".join(parts[1:])
+            repo_url = base_part
+            break
+
     if not dest_dir:
         # Create a temporary directory for the repo
         dest_dir = tempfile.mkdtemp(prefix="graphene_repo_")
@@ -19,6 +35,15 @@ def clone_repo(repo_url: str, branch: str = "main", dest_dir: str = None) -> str
         raise Exception(f"Failed to clone repository: {e}")
         
     _filter_noise(dest_dir)
+    
+    if subpath:
+        dest_dir_abs = os.path.abspath(dest_dir)
+        target_path = os.path.abspath(os.path.join(dest_dir, os.path.normpath(subpath)))
+        if not target_path.startswith(dest_dir_abs):
+            raise Exception("Security error: directory traversal detected in repository path")
+        print(f"Targeting subdirectory: {target_path}")
+        return target_path
+
     return dest_dir
 
 def _filter_noise(repo_path: str):

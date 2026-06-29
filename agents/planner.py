@@ -1,7 +1,9 @@
 from typing import TypedDict, Annotated, Sequence
 import operator
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+import os
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langgraph.graph import StateGraph, END
+from langchain_groq import ChatGroq
 from agents.specialists import architecture_agent, impact_agent, dead_code_agent
 
 # Define the state for the LangGraph
@@ -11,20 +13,28 @@ class AgentState(TypedDict):
 
 def planner_node(state: AgentState):
     """
-    Reads the user's query and decides which specialist to route to.
+    Uses Groq LLM to read the user's query and decide which specialist to route to.
     """
     messages = state['messages']
-    last_message = messages[-1].content.lower()
+    user_query = messages[-1].content
     
-    # Simple routing logic
-    if "architecture" in last_message or "structure" in last_message:
-        next_agent = "architecture"
-    elif "break" in last_message or "impact" in last_message or "change" in last_message:
-        next_agent = "impact"
-    elif "dead" in last_message or "unused" in last_message:
-        next_agent = "dead_code"
-    else:
-        # Default to architecture if unclear
+    llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0)
+    
+    prompt = f"""You are a routing agent for a codebase analysis tool.
+Read the user's query and decide which of the following three agents should handle it:
+1. 'dead_code': If they ask about unused, orphaned, or dead code.
+2. 'impact': If they ask what breaks, blast radius, or impact of changing something.
+3. 'architecture': If they ask about architecture, structure, or anything else (like 'where is X used').
+
+User Query: "{user_query}"
+
+Respond with ONLY ONE word: 'dead_code', 'impact', or 'architecture'."""
+
+    response = llm.invoke([HumanMessage(content=prompt)])
+    next_agent = response.content.strip().lower()
+    
+    # Fallback validation
+    if next_agent not in ["dead_code", "impact", "architecture"]:
         next_agent = "architecture"
         
     return {"next_agent": next_agent}

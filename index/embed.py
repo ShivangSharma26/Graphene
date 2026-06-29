@@ -14,14 +14,16 @@ def embed_code(ast_facts: list, collection_name="graphene_codebase"):
     """
     client = QdrantClient(url=QDRANT_URL, port=QDRANT_PORT)
     
-    # Ensure collection exists
+    # Always recreate the collection cleanly for a new repository
     try:
-        client.get_collection(collection_name=collection_name)
+        client.delete_collection(collection_name=collection_name)
     except Exception:
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
-        )
+        pass
+        
+    client.create_collection(
+        collection_name=collection_name,
+        vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
+    )
 
     points = []
     for fact in ast_facts:

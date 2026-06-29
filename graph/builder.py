@@ -15,6 +15,9 @@ def build_graph(ast_facts: list):
     driver = get_driver()
     
     with driver.session() as session:
+        # Wipe the database before adding new repo facts
+        session.run("MATCH (n) DETACH DELETE n")
+        
         for fact in ast_facts:
             if fact["type"] == "Function":
                 session.run(
