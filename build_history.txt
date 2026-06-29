@@ -8,3 +8,4 @@ Commit 6: chore: install cytoscape-fcose plugin
 Commit 7: refactor: switch from Celery to FastAPI background tasks
 Commit 8: feat: implement polling for ingestion status
 Commit 9: fix: resolve race condition in React useEffect
+Commit 10: feat: integrate Langchain ChatGroq model
