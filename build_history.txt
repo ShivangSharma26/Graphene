@@ -1,1 +1,2 @@
 Commit 0: refactor: restructure frontend components
+Commit 1: fix: resolve cytoscape graph layout issues
