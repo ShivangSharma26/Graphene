@@ -4,3 +4,4 @@ Commit 2: feat: implement concentric layout for nodes
 Commit 3: style: update node colors to match Figma design
 Commit 4: feat: add hover logic for node labels
 Commit 5: fix: revert layout to cose for better spreading
+Commit 6: chore: install cytoscape-fcose plugin
