@@ -17,3 +17,4 @@ Commit 15: feat: connect Neo4j queries to AI specialists
 Commit 16: style: enhance chat bubble markdown styling
 Commit 17: feat: implement impact analysis query generation
 Commit 18: fix: handle missing target in impact agent
+Commit 19: feat: add dead code detection heuristic
