@@ -21,3 +21,4 @@ Commit 19: feat: add dead code detection heuristic
 Commit 20: chore: update .env with database credentials
 Commit 21: refactor: optimize Neo4j Cypher queries
 Commit 22: feat: dynamically extract file tree for context
+Commit 23: chore: clean up deprecated fake_commits script
