@@ -30,3 +30,4 @@ Commit 28: fix: missing user props in App.jsx
 Commit 29: style: tighten markdown lists rendering
 Commit 30: feat: add logout functionality
 Commit 31: fix: token limit exceeded by reducing context size
+Commit 32: chore: disable qdrant compatibility check
