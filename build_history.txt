@@ -25,3 +25,4 @@ Commit 23: chore: clean up deprecated fake_commits script
 Commit 24: feat: add github auth flow
 Commit 25: fix: JWT token storage issue
 Commit 26: style: convert app to pink and black theme
+Commit 27: feat: implement sqlite for recent searches
