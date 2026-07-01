@@ -2,3 +2,4 @@ Commit 0: refactor: restructure frontend components
 Commit 1: fix: resolve cytoscape graph layout issues
 Commit 2: feat: implement concentric layout for nodes
 Commit 3: style: update node colors to match Figma design
+Commit 4: feat: add hover logic for node labels
