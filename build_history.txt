@@ -12,3 +12,4 @@ Commit 10: feat: integrate Langchain ChatGroq model
 Commit 11: fix: upgrade to llama-3.1-70b-versatile model
 Commit 12: feat: add Qdrant semantic search context
 Commit 13: refactor: update architecture agent prompt
+Commit 14: fix: remove tech stack bias from LLM prompt
