@@ -32,7 +32,19 @@ def clone_repo(repo_url: str, branch: str = "main", dest_dir: str = None) -> str
     try:
         Repo.clone_from(repo_url, dest_dir, branch=branch, depth=1)
     except Exception as e:
-        raise Exception(f"Failed to clone repository: {e}")
+        print(f"Cloning branch '{branch}' failed ({e}). Retrying with default branch...")
+        # Clean up the destination directory since Git clone requires it to be empty/non-existent
+        if os.path.exists(dest_dir):
+            try:
+                shutil.rmtree(dest_dir)
+            except Exception as cleanup_err:
+                print(f"Warning: Failed to clean up directory {dest_dir}: {cleanup_err}")
+        
+        try:
+            Repo.clone_from(repo_url, dest_dir, depth=1)
+            print("Successfully cloned default branch.")
+        except Exception as fallback_e:
+            raise Exception(f"Failed to clone repository: {fallback_e}")
         
     _filter_noise(dest_dir)
     

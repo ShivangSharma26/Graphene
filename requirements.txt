@@ -1,10 +1,7 @@
-# Web and Async
+# Web
 fastapi
 uvicorn
-celery
-redis
-sqlalchemy
-psycopg2-binary
+python-dotenv
 
 # Graph and Vector DBs
 neo4j
@@ -15,15 +12,11 @@ GitPython
 tree-sitter
 tree-sitter-python
 
-# Embeddings and LLMs
+# LLM
 langchain
 langchain-core
-langchain-openai
-voyageai
-
-# Multi-Agent
+langchain-groq
 langgraph
 
-# Utilities
-python-dotenv
+# Testing
 pytest

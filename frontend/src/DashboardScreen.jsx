@@ -1,56 +1,154 @@
 import React, { useState, useEffect, useRef } from 'react';
-import cytoscape from 'cytoscape';
-import CytoscapeComponent from 'react-cytoscapejs';
-import { GitBranch, Plus, Minus, Maximize, RefreshCw, ArrowUp, Bot } from 'lucide-react';
+import { GitBranch, Plus, Minus, Maximize, RefreshCw, ArrowUp, Bot, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-
-// Helper to assign Figma colors based on heuristics
-const getNodeColor = (name) => {
-  const n = name.toLowerCase();
-  if (n.includes('main') || n.includes('index') || n.includes('app') || n.includes('server')) return '#1D9E75'; // Entry
-  if (n.includes('auth') || n.includes('login') || n.includes('token') || n.includes('user')) return '#7F77DD'; // Auth
-  if (n.includes('pay') || n.includes('order') || n.includes('cart')) return '#D85A30'; // Critical
-  if (n.includes('test') || n.includes('util') || n.includes('helper') || n.includes('common')) return '#888780'; // Utility
-  return '#7F77DD'; // Default primary
-};
+import KnowledgeGraph from './components/KnowledgeGraph';
 
 export default function DashboardScreen({ repo }) {
-  const [elements, setElements] = useState([]);
-  const [stats, setStats] = useState({ nodes: 0, edges: 0 });
-  const [selectedNode, setSelectedNode] = useState(null);
+  const [graphData, setGraphData] = useState(null);
+  const [stats, setStats] = useState({ nodes: 0, edges: 0, langs: 0 });
+  const [ingesting, setIngesting] = useState(true);
+  const [ingestionStatus, setIngestionStatus] = useState('Cloning repository...');
   
   // Chat state
-  const [messages, setMessages] = useState([{
-    sender: 'agent',
-    text: "Codebase ingested successfully. How can I help you understand this architecture?"
-  }]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const cyRef = useRef(null);
+  const [showQuickQueries, setShowQuickQueries] = useState(false);
+  
+  // Resizable layout state
+  const [graphWidth, setGraphWidth] = useState(55); // percentage
+  const [isDragging, setIsDragging] = useState(false);
+
+  const chatEndRef = useRef(null);
+  // Auto-scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
+  // Drag logic for resizer
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+      const newWidth = (e.clientX / window.innerWidth) * 100;
+      if (newWidth > 20 && newWidth < 80) { // Limit between 20% and 80%
+        setGraphWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
 
   useEffect(() => {
-    // 1. Trigger ingestion API
-    fetch('/api/ingest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: repo })
-    }).then(res => res.json()).then(data => {
-      const jobId = data.job_id;
-      
-      // 2. Poll for completion
-      const interval = setInterval(async () => {
-        try {
-          const statusRes = await fetch(`/status/${jobId}`);
-          const statusData = await statusRes.json();
-          if (statusData.status === 'SUCCESS' || statusData.status === 'FAILURE') {
-            clearInterval(interval);
-            if (statusData.status === 'SUCCESS') loadGraph();
-          }
-        } catch (err) {
-          console.error(err);
+    let active = true;
+    let intervalId = null;
+
+    setIngesting(true);
+    setIngestionStatus('Cloning repository...');
+
+    const startIngestion = async () => {
+      try {
+        const token = localStorage.getItem('graphene_token');
+        const payload = { repo_url: repo };
+        if (token) {
+          payload.token = token;
         }
-      }, 2000);
-    });
+
+        const res = await fetch('/api/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        if (!res.ok) {
+          const errData = await res.json();
+          if (active) {
+            setIngesting(false);
+            setMessages([{
+              sender: 'agent',
+              text: `❌ **Ingestion failed:** ${errData.detail || 'Could not start ingestion.'}`
+            }]);
+          }
+          return;
+        }
+
+        const data = await res.json();
+        const jobId = data.job_id;
+        
+        if (!active) return;
+        setIngestionStatus('Parsing source code...');
+
+        intervalId = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`/api/status/${jobId}`);
+            if (!statusRes.ok) return;
+            const statusData = await statusRes.json();
+
+            if (!active) return;
+
+            if (statusData.status === 'STARTED') {
+              setIngestionStatus('Building knowledge graph...');
+            }
+
+            if (statusData.status === 'SUCCESS') {
+              if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+              }
+              setIngestionStatus('Loading graph...');
+              await loadGraph();
+              if (active) {
+                setIngesting(false);
+                setMessages([{
+                  sender: 'agent',
+                  text: "✅ **Codebase ingested successfully!**\n\nI've analyzed the repository, built the knowledge graph, and indexed all source code. I can now answer any question about this codebase.\n\nTry asking me:\n- *What's the architecture?*\n- *What does function X do?*\n- *Show dead code*\n- *What are the API endpoints?*"
+                }]);
+              }
+            } else if (statusData.status === 'FAILURE') {
+              if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+              }
+              if (active) {
+                setIngesting(false);
+                setMessages([{
+                  sender: 'agent',
+                  text: "❌ **Ingestion failed.** Please check if the repository URL is correct and try again."
+                }]);
+              }
+            }
+          } catch (err) {
+            console.error('Polling error:', err);
+          }
+        }, 2000);
+
+      } catch (err) {
+        if (active) {
+          setIngesting(false);
+          setMessages([{ sender: 'agent', text: '❌ Failed to connect to the backend.' }]);
+        }
+      }
+    };
+
+    startIngestion();
+
+    return () => {
+      active = false;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, [repo]);
 
   const loadGraph = async () => {
@@ -58,32 +156,44 @@ export default function DashboardScreen({ repo }) {
       const res = await fetch('/api/graph-data');
       const data = await res.json();
       
-      const cyElements = [];
-      data.nodes.forEach(n => {
-        cyElements.push({
-          data: { id: n.id, label: n.name, group: n.group, color: getNodeColor(n.name) }
-        });
-      });
+      const d3Nodes = data.nodes.map(n => ({
+        id: n.id,
+        label: n.name,
+        type: n.group.toLowerCase(), // File -> file, Class -> class, etc.
+      }));
+
+      const seenEdges = new Set();
+      const d3Links = [];
+
       data.links.forEach(l => {
-        cyElements.push({
-          data: { source: l.source, target: l.target, label: l.type || 'CALLS' }
-        });
+        const edgeKey = `${l.source}-${l.target}`;
+        if (!seenEdges.has(edgeKey)) {
+          seenEdges.add(edgeKey);
+          
+          let kind = 'imports';
+          if (l.type === 'DEFINED_IN') kind = 'defines';
+          if (l.type === 'CALLS') kind = 'calls';
+          if (l.type === 'IMPORTS_FILE') kind = 'imports';
+
+          d3Links.push({
+            source: l.source,
+            target: l.target,
+            kind: kind
+          });
+        }
       });
       
-      setElements(cyElements);
-      setStats({ nodes: data.nodes.length, edges: data.links.length });
+      // Count unique languages from node data
+      const langs = new Set(data.nodes.filter(n => n.group === 'File').map(n => {
+        const ext = n.name?.split('.').pop();
+        return ext;
+      }));
+      
+      setGraphData({ nodes: d3Nodes, links: d3Links });
+      setStats({ nodes: data.nodes.length, edges: data.links.length, langs: langs.size || 0 });
     } catch(err) {
-      console.error(err);
+      console.error('Graph load error:', err);
     }
-  };
-
-  const handleNodeClick = (event) => {
-    const node = event.target;
-    setSelectedNode({
-      name: node.data('label'),
-      type: node.data('group'),
-      impact: 'Critical' // Mocked for UI, ideally comes from API
-    });
   };
 
   const sendMessage = async (text) => {
@@ -95,7 +205,7 @@ export default function DashboardScreen({ repo }) {
     setLoading(true);
 
     try {
-      const res = await fetch('/query', {
+      const res = await fetch('/api/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: text })
@@ -103,166 +213,100 @@ export default function DashboardScreen({ repo }) {
       const data = await res.json();
       setMessages([...newMsgs, { sender: 'agent', text: data.response }]);
     } catch (err) {
-      setMessages([...newMsgs, { sender: 'agent', text: "Error connecting to AI." }]);
+      setMessages([...newMsgs, { sender: 'agent', text: "❌ Error connecting to the AI backend. Make sure the server is running." }]);
     }
     setLoading(false);
   };
 
-  const handleQuickQuery = (q) => sendMessage(q);
-
   return (
-    <div className="dashboard-layout">
-      {/* LEFT GRAPH PANE */}
-      <div className="graph-section">
-        
+    <div className={`dashboard-layout ${isDragging ? 'dragging' : ''}`}>
+      <div className="graph-section" style={{ flex: `0 0 ${graphWidth}%` }}>
         {/* Top Overlay Stats */}
-        <div className="graph-top-overlay">
+        <div className="graph-top-overlay" style={{zIndex: 10}}>
           <div className="repo-badge">
             <GitBranch size={16} />
             {repo.replace('https://github.com/', '')}
           </div>
           <div className="stats-text">
-            <span>{stats.nodes}</span> nodes &nbsp;&nbsp; <span>{stats.edges}</span> edges &nbsp;&nbsp; <span>3</span> langs
+            <span>{stats.nodes}</span> nodes &nbsp;&nbsp; <span>{stats.edges}</span> edges &nbsp;&nbsp; <span>{stats.langs}</span> langs
           </div>
         </div>
 
-        {/* Floating Controls */}
-        <div className="floating-controls">
-          <div className="control-btn" onClick={() => cyRef.current?.zoom(cyRef.current.zoom() + 0.2)}><Plus size={18} /></div>
-          <div className="control-btn" onClick={() => cyRef.current?.zoom(cyRef.current.zoom() - 0.2)}><Minus size={18} /></div>
-          <div className="control-btn" onClick={() => cyRef.current?.fit()}><Maximize size={18} /></div>
-          <div className="control-btn" onClick={loadGraph}><RefreshCw size={18} /></div>
-        </div>
-
-        {/* Node Detail Card */}
-        {selectedNode && (
-          <div className="node-detail-card">
-            <div className="node-card-header">
-              <div className="node-card-title">{selectedNode.name}</div>
-              <div className="risk-badge">High risk</div>
-            </div>
-            <div className="node-card-row">
-              <div className="node-card-label">Type</div>
-              <div className="node-card-value">{selectedNode.type}</div>
-            </div>
-            <div className="node-card-row">
-              <div className="node-card-label">Callers</div>
-              <div className="node-card-value">Unknown</div>
-            </div>
-            <div className="node-card-row">
-              <div className="node-card-label">Impact</div>
-              <div className="node-card-value value-critical">{selectedNode.impact}</div>
-            </div>
+        {/* Loading State or Knowledge Graph */}
+        {ingesting ? (
+          <div className="graph-loading">
+            <Loader2 size={40} className="spinner" />
+            <div className="loading-text">{ingestionStatus}</div>
           </div>
+        ) : (
+          graphData && <KnowledgeGraph data={graphData} />
         )}
+      </div>
 
-        {/* Filter Chips */}
-        <div className="filter-chips">
-          <div className="filter-chip active">All</div>
-          <div className="filter-chip">Services</div>
-          <div className="filter-chip">Functions</div>
-          <div className="filter-chip">Dead code</div>
-          <div className="filter-chip">Imports</div>
-        </div>
-
-        <CytoscapeComponent 
-          elements={elements} 
-          style={{ width: '100%', height: '100%' }}
-          cy={(cy) => {
-            cyRef.current = cy;
-            cy.on('tap', 'node', handleNodeClick);
-            cy.on('mouseover', 'node', (e) => {
-              e.target.style({ 'label': e.target.data('label'), 'font-size': '12px', 'text-background-opacity': 0.8, 'text-background-color': '#000', 'z-index': 100 });
-            });
-            cy.on('mouseout', 'node', (e) => {
-              e.target.style({ 'label': '' });
-            });
-          }}
-          layout={{ 
-            name: 'cose', 
-            padding: 50,
-            nodeRepulsion: 400000,
-            idealEdgeLength: 100,
-            gravity: 0.1
-          }}
-          stylesheet={[
-            {
-              selector: 'node',
-              style: {
-                'background-color': 'data(color)',
-                'label': '', /* Hide labels to stop the massive text overlap */
-                'width': 16,
-                'height': 16,
-                'border-width': 2,
-                'border-color': '#fff'
-              }
-            },
-            {
-              selector: 'edge',
-              style: {
-                'width': 2,
-                'line-color': '#333',
-                'target-arrow-color': '#333',
-                'target-arrow-shape': 'triangle',
-                'curve-style': 'bezier',
-                'label': 'data(label)',
-                'font-size': '8px',
-                'color': '#888',
-                'text-background-opacity': 1,
-                'text-background-color': '#111'
-              }
-            }
-          ]}
-        />
+      {/* Resizable Divider */}
+      <div 
+        className="layout-resizer" 
+        onMouseDown={() => setIsDragging(true)}
+        title="Drag to resize"
+      >
+        <div className="resizer-handle"></div>
       </div>
 
       {/* RIGHT CHAT PANE */}
-      <div className="chat-section">
+      <div className="chat-section" style={{ flex: `0 0 ${100 - graphWidth}%` }}>
         <div className="chat-header">
           <div className="chat-header-title">
-            <Bot size={18} color="#7F77DD" /> Agent chat
+            <Bot size={18} color="#FF4081" /> AI Assistant
           </div>
-          <div className="agent-badge">Impact agent</div>
+          <div className="agent-badge">Graphene Agent</div>
         </div>
 
         <div className="chat-messages">
           {messages.map((m, i) => (
             <div key={i} className={`message-bubble ${m.sender === 'user' ? 'message-user' : 'message-agent'}`}>
-              {m.sender === 'agent' && <div className="agent-name-small">GRAPHENE AGENT</div>}
-              {/* If it's a blast radius response, style it like the impact box in figma */}
-              {m.sender === 'agent' && m.text.includes('Blast Radius') ? (
-                <div className="impact-box">
-                  <ReactMarkdown>{m.text}</ReactMarkdown>
-                </div>
-              ) : (
-                <ReactMarkdown>{m.text}</ReactMarkdown>
-              )}
+              {m.sender === 'agent' && <div className="agent-name-small">GRAPHENE AI</div>}
+              <ReactMarkdown>{m.text}</ReactMarkdown>
             </div>
           ))}
           {loading && (
             <div className="message-bubble message-agent">
-              <div className="agent-name-small">GRAPHENE AGENT</div>
-              <div>Scanning deeper...</div>
+              <div className="agent-name-small">GRAPHENE AI</div>
+              <div className="loading-dots">
+                <span>Analyzing codebase</span>
+                <Loader2 size={14} className="spinner" style={{display: 'inline-block', marginLeft: '8px'}} />
+              </div>
             </div>
           )}
+          <div ref={chatEndRef} />
         </div>
 
         <div className="chat-input-area">
-          <div className="quick-queries">
-            <div className="quick-query-label">QUICK QUERIES</div>
-            <button className="quick-query-btn" onClick={() => handleQuickQuery("What's the architecture?")}>
-              What's the architecture?
+          <div className="quick-queries-dropdown">
+            <button 
+              className="quick-query-toggle" 
+              onClick={() => setShowQuickQueries(!showQuickQueries)}
+            >
+              ⚡ Quick Queries {showQuickQueries ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </button>
-            <button className="quick-query-btn" onClick={() => handleQuickQuery("Show dead code")}>
-              Show dead code
-            </button>
+            {showQuickQueries && (
+              <div className="quick-queries-menu">
+                <button className="quick-query-btn" onClick={() => { sendMessage("What's the architecture of this codebase?"); setShowQuickQueries(false); }}>
+                  What's the architecture?
+                </button>
+                <button className="quick-query-btn" onClick={() => { sendMessage("List all API endpoints"); setShowQuickQueries(false); }}>
+                  List all API endpoints
+                </button>
+                <button className="quick-query-btn" onClick={() => { sendMessage("Show dead code"); setShowQuickQueries(false); }}>
+                  Show dead code
+                </button>
+              </div>
+            )}
           </div>
-          <br/>
           <div className="chat-input-wrapper">
             <input 
               type="text" 
               className="chat-input" 
-              placeholder="Ask about the repo..." 
+              placeholder="Ask anything about the codebase..." 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendMessage(input)}

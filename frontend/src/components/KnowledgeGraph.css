@@ -1,0 +1,123 @@
+/* Legend Panel */
+.d3-legend {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(20, 22, 30, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  pointer-events: none; /* Let clicks pass through */
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Dots for Legend & Panel */
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 8px currentColor;
+}
+.file-dot { background: #00E5FF; color: #00E5FF; }
+.class-dot { background: #B388FF; color: #B388FF; }
+.fn-dot, .function-dot { background: #FF4081; color: #FF4081; }
+.imp-dot, .import-dot { background: #7C4DFF; color: #7C4DFF; }
+
+/* Detail Panel */
+.d3-detail-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 280px;
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+  background: rgba(20, 22, 30, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.d3-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.d3-detail-title {
+  font-weight: 600;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.d3-detail-section {
+  margin-bottom: 16px;
+}
+.d3-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.d3-detail-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.d3-detail-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.d3-detail-section li {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px 8px;
+  border-radius: 6px;
+  word-break: break-all;
+}
+
+.edge-kind {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-right: 4px;
+}
+
+.empty-text {
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+}
+
+/* Bottom Hint */
+.d3-hint {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
