@@ -10,3 +10,4 @@ Commit 8: feat: implement polling for ingestion status
 Commit 9: fix: resolve race condition in React useEffect
 Commit 10: feat: integrate Langchain ChatGroq model
 Commit 11: fix: upgrade to llama-3.1-70b-versatile model
+Commit 12: feat: add Qdrant semantic search context
