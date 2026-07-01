@@ -33,3 +33,4 @@ Commit 31: fix: token limit exceeded by reducing context size
 Commit 32: chore: disable qdrant compatibility check
 Commit 33: refactor: enforce aggressive LLM prompt instructions
 Commit 34: fix: remove broken agents and settings buttons
+Commit 35: style: logged in landing screen UI overhaul
