@@ -27,3 +27,4 @@ Commit 25: fix: JWT token storage issue
 Commit 26: style: convert app to pink and black theme
 Commit 27: feat: implement sqlite for recent searches
 Commit 28: fix: missing user props in App.jsx
+Commit 29: style: tighten markdown lists rendering
