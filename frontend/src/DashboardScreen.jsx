@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GitBranch, Plus, Minus, Maximize, RefreshCw, ArrowUp, Bot, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import KnowledgeGraph from './components/KnowledgeGraph';
-import './DashboardScreen.css';
 import { API_BASE_URL } from './config';
 
 export default function DashboardScreen({ repo }) {
