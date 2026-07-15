@@ -39,9 +39,20 @@ export default function App() {
 
   // Auth management
   useEffect(() => {
-    const token = localStorage.getItem('graphene_token');
-    if (token) {
-      handleLoginSuccess(token);
+    // Check URL parameters for a new token first (from GitHub redirect)
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    
+    if (urlToken) {
+      localStorage.setItem('graphene_token', urlToken);
+      window.history.replaceState({}, document.title, '/');
+      handleLoginSuccess(urlToken);
+    } else {
+      // Fallback to local storage
+      const storedToken = localStorage.getItem('graphene_token');
+      if (storedToken) {
+        handleLoginSuccess(storedToken);
+      }
     }
   }, []);
 

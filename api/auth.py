@@ -74,7 +74,7 @@ async def github_callback(code: str):
         token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
         
         # 5. Redirect back to frontend with token
-        return RedirectResponse(url=f"{FRONTEND_URL}/auth/callback?token={token}")
+        return RedirectResponse(url=f"{FRONTEND_URL}/?token={token}")
 
 @router.get("/me")
 async def get_current_user(token: str):
