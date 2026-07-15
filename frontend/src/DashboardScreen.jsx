@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GitBranch, Plus, Minus, Maximize, RefreshCw, ArrowUp, Bot, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import KnowledgeGraph from './components/KnowledgeGraph';
+import './DashboardScreen.css';
+import { API_BASE_URL } from './config';
 
 export default function DashboardScreen({ repo }) {
   const [graphData, setGraphData] = useState(null);
@@ -65,7 +67,7 @@ export default function DashboardScreen({ repo }) {
           payload.token = token;
         }
 
-        const res = await fetch('/api/ingest', {
+        const res = await fetch(`${API_BASE_URL}/api/ingest`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -91,7 +93,7 @@ export default function DashboardScreen({ repo }) {
 
         intervalId = setInterval(async () => {
           try {
-            const statusRes = await fetch(`/api/status/${jobId}`);
+            const statusRes = await fetch(`${API_BASE_URL}/api/status/${jobId}`);
             if (!statusRes.ok) return;
             const statusData = await statusRes.json();
 
@@ -153,7 +155,7 @@ export default function DashboardScreen({ repo }) {
 
   const loadGraph = async () => {
     try {
-      const res = await fetch('/api/graph-data');
+      const res = await fetch(`${API_BASE_URL}/api/graph-data`);
       const data = await res.json();
       
       const d3Nodes = data.nodes.map(n => ({
@@ -205,7 +207,7 @@ export default function DashboardScreen({ repo }) {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/query', {
+      const res = await fetch(`${API_BASE_URL}/api/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: text })

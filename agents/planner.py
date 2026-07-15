@@ -19,7 +19,7 @@ def planner_node(state: AgentState):
     messages = state['messages']
     user_query = messages[-1].content
     
-    llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0)
+    llm = ChatGroq(model_name="llama-3.1-8b-instant", temperature=0)
     
     prompt = f"""You are a routing agent for a codebase analysis tool.
 Read the user's query and decide which of the following four agents should handle it:

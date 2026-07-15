@@ -109,13 +109,19 @@ async def ingest_repo(request: IngestRequest, background_tasks: BackgroundTasks)
 
 @app.post("/api/query")
 async def query_codebase(request: QueryRequest):
-    from agents.planner import run_query
-    repo_path = current_repo_path.get("path")
-    response = run_query(request.query, repo_path)
-    return {
-        "query": request.query,
-        "response": response
-    }
+    try:
+        from agents.planner import run_query
+        repo_path = current_repo_path.get("path")
+        response = run_query(request.query, repo_path)
+        return {
+            "query": request.query,
+            "response": response
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"Error inside query_codebase: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/status/{job_id}")
 async def get_status(job_id: str):

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import LandingScreen from './LandingScreen';
 import DashboardScreen from './DashboardScreen';
+import { API_BASE_URL } from './config';
 import FilesScreen from './FilesScreen';
 import HistoryModal from './components/HistoryModal';
 import './index.css';
@@ -46,7 +47,7 @@ export default function App() {
 
   const handleLoginSuccess = async (token) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/auth/me?token=${token}`);
+      const res = await fetch(`${API_BASE_URL}/api/auth/me?token=${token}`);
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);

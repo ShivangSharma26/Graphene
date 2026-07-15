@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Folder, File, ChevronRight, ChevronDown, FileCode, Search, Terminal, RefreshCw } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { API_BASE_URL } from './config';
 import './FilesScreen.css';
 
 // Recursive File Tree Node
@@ -52,7 +53,7 @@ export default function FilesScreen({ isActive }) {
 
   const fetchTree = () => {
     setLoadingTree(true);
-    fetch('/api/files')
+    fetch(`${API_BASE_URL}/api/files`)
       .then(res => {
         if (!res.ok) throw new Error('Not found');
         return res.json();
@@ -76,7 +77,7 @@ export default function FilesScreen({ isActive }) {
   const handleSelectFile = (path) => {
     setSelectedFile(path);
     setLoadingContent(true);
-    fetch(`/api/files/content?file_path=${encodeURIComponent(path)}`)
+    fetch(`${API_BASE_URL}/api/files/content?file_path=${encodeURIComponent(path)}`)
       .then(res => res.json())
       .then(data => {
         setFileContent(data.content || 'Error loading file.');

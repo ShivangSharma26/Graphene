@@ -1,6 +1,7 @@
 import React from 'react';
 import { Code2, Network, Zap, LayoutTemplate, Sun, Moon, LogOut } from 'lucide-react';
 import './LandingScreen.css';
+import { API_BASE_URL } from './config';
 
 const GithubIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -14,7 +15,7 @@ export default function LandingScreen({ onThemeToggle, theme, user, onAnalyze, r
 
   const handleGithubLogin = () => {
     // Redirect to FastAPI backend auth route
-    window.location.href = "http://localhost:8000/api/auth/login/github";
+    window.location.href = `${API_BASE_URL || 'http://localhost:8000'}/api/auth/login/github`;
   };
 
   if (user) {

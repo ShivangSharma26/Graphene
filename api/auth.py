@@ -33,7 +33,7 @@ async def github_callback(code: str):
         raise HTTPException(status_code=500, detail="GitHub OAuth not configured properly.")
 
     # 1. Exchange code for access token
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         token_res = await client.post(
             "https://github.com/login/oauth/access_token",
             data={

@@ -72,8 +72,8 @@ def _read_repo_files(repo_path: str, max_files: int = 30) -> str:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     content = f.read()
                 # Truncate very large files heavily to avoid token limits
-                if len(content) > 1500:
-                    content = content[:1500] + "\n# ... file truncated ..."
+                if len(content) > 800:
+                    content = content[:800] + "\n# ... file truncated ..."
                 file_contents.append(f"=== FILE: {rel_path} ===\n{content}")
                 file_count += 1
             except Exception:
@@ -84,7 +84,7 @@ def _read_repo_files(repo_path: str, max_files: int = 30) -> str:
 # ── Shared LLM Setup ──────────────────────────────────────────────────
 
 def _get_llm():
-    return ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0)
+    return ChatGroq(model_name="llama-3.1-8b-instant", temperature=0)
 
 # ── Build Comprehensive Context ──────────────────────────────────────
 
@@ -112,13 +112,13 @@ def _build_full_context(repo_path: str = None) -> str:
     """)
     if functions:
         func_list = []
-        for fn in functions[:15]:  # Limit to 15 functions to save tokens
+        for fn in functions[:8]:  # Limit to 8 functions to save tokens
             code = fn.get('code', '')
             if code:
-                func_list.append(f"### {fn['name']} (in {fn['file']})\n```python\n{code[:800]}\n```")
+                func_list.append(f"### {fn['name']} (in {fn['file']})\n```python\n{code[:400]}\n```")
             else:
                 func_list.append(f"- {fn['name']} (in {fn['file']})")
-        context_parts.append(f"## FUNCTIONS (showing {min(len(functions), 15)} of {len(functions)})\n" + "\n\n".join(func_list))
+        context_parts.append(f"## FUNCTIONS (showing {min(len(functions), 8)} of {len(functions)})\n" + "\n\n".join(func_list))
     
     # Get all classes with their code
     classes = _neo4j_query("""
@@ -128,13 +128,13 @@ def _build_full_context(repo_path: str = None) -> str:
     """)
     if classes:
         class_list = []
-        for cls in classes[:5]: # Limit to 5 classes to save tokens
+        for cls in classes[:3]: # Limit to 3 classes to save tokens
             code = cls.get('code', '')
             if code:
-                class_list.append(f"### class {cls['name']} (in {cls['file']})\n```python\n{code[:800]}\n```")
+                class_list.append(f"### class {cls['name']} (in {cls['file']})\n```python\n{code[:400]}\n```")
             else:
                 class_list.append(f"- class {cls['name']} (in {cls['file']})")
-        context_parts.append(f"## CLASSES (showing {min(len(classes), 5)} of {len(classes)})\n" + "\n\n".join(class_list))
+        context_parts.append(f"## CLASSES (showing {min(len(classes), 3)} of {len(classes)})\n" + "\n\n".join(class_list))
     
     # Get relationships
     calls = _neo4j_query("""
@@ -175,9 +175,9 @@ def _build_full_context(repo_path: str = None) -> str:
     
     # --- Source 3: Raw file reading (the most important!) ---
     if repo_path:
-        raw_files = _read_repo_files(repo_path, max_files=5) # Reduced max files to 5 to save tokens
+        raw_files = _read_repo_files(repo_path, max_files=2) # Reduced max files to 2 to save tokens
         if raw_files:
-            context_parts.append(f"## RAW SOURCE CODE (Top 5 Files)\n{raw_files}")
+            context_parts.append(f"## RAW SOURCE CODE (Top 2 Files)\n{raw_files}")
     
     return "\n\n".join(context_parts)
 
