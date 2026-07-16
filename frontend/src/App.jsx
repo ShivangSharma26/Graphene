@@ -58,9 +58,15 @@ export default function App() {
 
   const handleLoginSuccess = async (token) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/me?token=${token}`);
+      const fetchUrl = `${API_BASE_URL}/api/auth/me?token=${token}`;
+      console.log("Attempting to fetch user from:", fetchUrl);
+      
+      const res = await fetch(fetchUrl);
+      console.log("Fetch response status:", res.status, res.ok);
+      
       if (res.ok) {
         const data = await res.json();
+        console.log("Successfully fetched user data:", data);
         setUser(data.user);
         setRecentRepos(data.recent_searches || []);
         // Clean URL if we came from callback
@@ -68,10 +74,13 @@ export default function App() {
           window.history.replaceState({}, document.title, '/');
         }
       } else {
+        console.error("Response was not ok. Status:", res.status);
+        const errorText = await res.text();
+        console.error("Error response text:", errorText);
         localStorage.removeItem('graphene_token');
       }
     } catch (err) {
-      console.error("Auth error", err);
+      console.error("Network or Auth error caught:", err);
     }
   };
 
