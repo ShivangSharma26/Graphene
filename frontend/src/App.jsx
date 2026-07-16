@@ -27,6 +27,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [recentRepos, setRecentRepos] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [debugMsg, setDebugMsg] = useState('');
 
   // Theme management
   useEffect(() => {
@@ -42,6 +43,8 @@ export default function App() {
     // Check URL parameters for a new token first (from GitHub redirect)
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get('token');
+    
+    setDebugMsg(`DEBUG v2: API_BASE_URL="${API_BASE_URL}", token in URL=${urlToken ? 'YES' : 'NO'}, token in storage=${localStorage.getItem('graphene_token') ? 'YES' : 'NO'}`);
     
     if (urlToken) {
       localStorage.setItem('graphene_token', urlToken);
@@ -59,28 +62,25 @@ export default function App() {
   const handleLoginSuccess = async (token) => {
     try {
       const fetchUrl = `${API_BASE_URL}/api/auth/me?token=${token}`;
-      console.log("Attempting to fetch user from:", fetchUrl);
+      setDebugMsg(prev => prev + ` | FETCHING: ${fetchUrl}`);
       
       const res = await fetch(fetchUrl);
-      console.log("Fetch response status:", res.status, res.ok);
       
       if (res.ok) {
         const data = await res.json();
-        console.log("Successfully fetched user data:", data);
+        setDebugMsg(prev => prev + ` | SUCCESS: got user ${data.user?.username}`);
         setUser(data.user);
         setRecentRepos(data.recent_searches || []);
-        // Clean URL if we came from callback
         if (window.location.pathname === '/auth/callback') {
           window.history.replaceState({}, document.title, '/');
         }
       } else {
-        console.error("Response was not ok. Status:", res.status);
         const errorText = await res.text();
-        console.error("Error response text:", errorText);
+        setDebugMsg(prev => prev + ` | FAIL ${res.status}: ${errorText}`);
         localStorage.removeItem('graphene_token');
       }
     } catch (err) {
-      console.error("Network or Auth error caught:", err);
+      setDebugMsg(prev => prev + ` | NETWORK ERROR: ${err.message}`);
     }
   };
 
@@ -108,6 +108,12 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {/* DEBUG BANNER - REMOVE AFTER FIXING */}
+      {debugMsg && (
+        <div style={{position:'fixed',top:0,left:0,right:0,zIndex:99999,background:'#ff0',color:'#000',padding:'8px 12px',fontSize:'11px',fontFamily:'monospace',wordBreak:'break-all',maxHeight:'80px',overflow:'auto'}}>
+          {debugMsg}
+        </div>
+      )}
       {/* Top Nav Bar for entire app */}
       <div className="top-bar glass-bar">
         <div className="logo-section" onClick={() => setRepoUrl(null)} style={{cursor: 'pointer'}}>
