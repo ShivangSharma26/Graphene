@@ -53,12 +53,23 @@ async def github_callback(code: str):
         # 2. Fetch user profile from GitHub
         user_res = await client.get(
             "https://api.github.com/user",
-            headers={"Authorization": f"Bearer {access_token}"}
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "User-Agent": "Graphene-App",
+                "Accept": "application/json"
+            }
         )
+        
+        if user_res.status_code != 200:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to fetch GitHub profile: {user_res.status_code} {user_res.text}"
+            )
+            
         user_data = user_res.json()
         
         github_id = str(user_data["id"])
-        username = user_data["login"]
+        username = user_data.get("login", "Unknown")
         avatar_url = user_data.get("avatar_url", "")
         
         # 3. Store user in SQLite
