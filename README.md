@@ -23,6 +23,11 @@ The primary objective of this project is to build an agentic AI system capable o
 The system relies on an ingestion pipeline that parses Abstract Syntax Trees (ASTs) rather than naive regex, ensuring absolute accuracy when querying code relationships.
 
 ## 🏗️ System Architecture & High-Level Design
+
+<p align="center">
+  <img src="systemdesign.png" alt="Graphene System Architecture" width="100%"/>
+</p>
+
 Graphene relies on a Multi-Agent Architecture built with LangGraph and FastAPI. Instead of relying on a single context-limited prompt, it intelligently orchestrates sub-agents:
 
 * **Planner Orchestrator**: Analyzes the developer's question and routes the query to the correct specialist agent based on the intent.
