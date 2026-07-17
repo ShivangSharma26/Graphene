@@ -4,6 +4,15 @@ An intelligent, multi-agent AI code assistant designed to provide deep structura
 
 Built to solve real-world engineering queries by combining the precise structural representation of a Knowledge Graph with the semantic search capabilities of a Vector Database.
 
+## 🎬 Demo Videos
+
+> **📂 [Watch the Demo Videos →](https://drive.google.com/drive/folders/1ucf4Rwjuk0fuZFop4yZNla4hzxAE67ub?usp=sharing)**
+
+| Video | Description |
+|-------|-------------|
+| **GRAPHENE CODEBASE AND DOCUMENTATION REVIEW** | A complete walkthrough of the project — what Graphene is, the architecture behind it, how the multi-agent pipeline works, and a full codebase review covering every module and design decision. |
+| **GRAPHENE STRESS TESTING** | A live stress-testing session pushing Graphene to its limits — testing complex queries, edge cases, large repositories, and validating the accuracy of architecture analysis, impact detection, and dead code elimination in real-time. |
+
 ## 🎯 Project Goal
 The primary objective of this project is to build an agentic AI system capable of handling three distinct categories of engineering queries:
 
